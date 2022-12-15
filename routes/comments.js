@@ -1,6 +1,10 @@
 const express = require("express");
 const router = express.Router();
 
+const moment = require('moment');
+require('moment-timezone'); 
+moment.tz.setDefault("Asia/Seoul");
+
 const Comments = require("../schemas/comment.js");
 const Posts = require("../schemas/post.js");
 
@@ -27,7 +31,18 @@ router.get("/:postId", async(req,res) => {
         const { postId } = req.params;
 
         const comments = await Comments.find({ postId },{'__v':false,'updatedAt':false,'password':false}).sort({'createdAt':-1});
-        res.json({comments});
+        
+        const commentList = comments.map((a) =>{
+            return({
+                _id: a._id,
+                contents: a.contents,
+                writer: a.writer,
+                createdAt: moment(a.createdAt).format("YYYY-MM-DD HH:mm:ss")
+            })
+        });
+        
+        res.json({commentList});
+    
     } catch (err) {
         return res.status(400).json({"message": "데이터 형식이 올바르지 않습니다."});
     } 

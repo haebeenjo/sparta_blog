@@ -1,6 +1,10 @@
 const express = require("express");
 const router = express.Router();
 
+const moment = require('moment');
+require('moment-timezone'); 
+moment.tz.setDefault("Asia/Seoul");
+
 const Posts = require("../schemas/post.js");
 
 // 게시물 작성
@@ -20,7 +24,17 @@ router.post("/", async(req, res) => {
 // 전체 게시글 목록 조회
 router.get("/", async(req, res) => {
     const posts = await Posts.find({}, {'__v':false,'password':false, 'contents':false,'updatedAt':false}).sort({'createdAt':-1});
-    res.json({posts});
+
+    const postList = posts.map((post) => {
+        return ({
+            _id : post._id,
+            title : post.title,
+            writer: post.writer,            
+            createdAt : moment(post.createdAt).format("YYYY-MM-DD HH:mm:ss")
+        })
+    });
+
+    res.json({postList});
 });
 
 // 게시글 상세 조회
@@ -28,9 +42,18 @@ router.get('/:postId', async (req, res) => {
     try {
         const { postId } = req.params;
 
-        const posts = await Posts.findOne({ _id: postId });
+        const post = await Posts.findOne({ _id: postId });
 
-        res.status(200).json({posts});    
+        const postDetail = {
+            
+            _id : post._id,
+            title : post.title,
+            writer: post.writer,  
+            contents: post.contents,          
+            createdAt : moment(post.createdAt).format("YYYY-MM-DD HH:mm:ss")
+        
+        };
+        res.json({postDetail});    
     } catch(err){
         return res.status(400).json({"message": "데이터 형식이 올바르지 않습니다."});
     }    
